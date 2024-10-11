@@ -107,16 +107,13 @@ clf = GridSearchCV(
     return_train_score=False,
 )
 
-
 clf.fit(X_train, y_train)
 results = pd.DataFrame(clf.cv_results_)
 results[
     ["param_algorithm", "param_n_neighbors", "param_weights", "mean_test_score"]
 ].sort_values(by=["mean_test_score"], ascending=False)
 
-
 model = clf.best_estimator_
 
 y_preds = model.predict(X_test)
-
 joblib.dump(model, "model_KNeighborsClassifier.joblib")
