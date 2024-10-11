@@ -1,136 +1,122 @@
-import streamlit as st
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-# %matplotlib inline
 
-# Impoting data preprocessing libraries
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+# visualization libraries
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+# Importing data preprocessing libraries
+from sklearn.preprocessing import StandardScaler
 
 # Importing model selection libraries.
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 
-# Importing metrics for model evaluation.
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve
-from sklearn.metrics import classification_report, ConfusionMatrixDisplay
 # for knn
 from sklearn.neighbors import KNeighborsClassifier
+
 # Importing SMOTE for handling class imbalance.
 from imblearn.over_sampling import SMOTE
 
-import warnings
-warnings.filterwarnings('ignore')
+"""### Importing the data"""
+
+df = pd.read_csv("./data_cardiovascular_risk.csv", index_col="id")
+
+"""### Data Cleaning"""
+
+nan_columns = ["education", "cigsPerDay", "BPMeds", "totChol", "BMI", "heartRate"]
+
+df.dropna(subset=nan_columns, inplace=True)
+
+df["glucose"] = df["glucose"].fillna(df["glucose"].median())
+df["sex"] = df["sex"].map({"M": 1, "F": 0})
+df["is_smoking"] = df["is_smoking"].map({"YES": 1, "NO": 0})
+df["pulse_pressure"] = df["sysBP"] - df["diaBP"]
+df.drop(columns=["sysBP", "diaBP"], inplace=True)
+
+"""#### Visually it seems like there is some outliers in totChol, glucose and pulse_pressure.
+
+#### Using Modified-Z score to tackle the problem
+"""
+
+thresh = 3.5
 
 
-risk_df = pd.read_csv('data_cardiovascular_risk.csv', index_col='id')
+# func to calcualte the modified z-score
+def modified_z_score(series):
+    median = np.median(series)
+    mad = np.median(np.abs(series - median))
 
-numeric_features = []
-categorical_features = []
-
-# splitting features into numeric and categoric.
-
-for col in risk_df.columns:  
-  if risk_df[col].nunique() > 10:
-    numeric_features.append(col) 
-  else:
-    categorical_features.append(col)
-
-nan_columns = ['education', 'cigsPerDay', 'BPMeds', 'totChol', 'BMI', 'heartRate']
-
-# dropping null values
-risk_df.dropna(subset=nan_columns, inplace=True)
-
-risk_df['glucose'] = risk_df.glucose.fillna(risk_df.glucose.median())
-
-# we are going to replace the datapoints with upper and lower bound of all the outliers
-
-def clip_outliers(risk_df):
-    for col in risk_df[numeric_features]:
-        # using IQR method to define range of upper and lower limit.
-        q1 = risk_df[col].quantile(0.25)
-        q3 = risk_df[col].quantile(0.75)
-        iqr = q3 - q1
-        lower_bound = q1 - 1.5 * iqr
-        upper_bound = q3 + 1.5 * iqr
-
-        # replacing the outliers with upper and lower bound
-        risk_df[col] = risk_df[col].clip(lower_bound, upper_bound)
-    return risk_df
-
-risk_df = clip_outliers(risk_df)
-
-risk_df['sex'] = risk_df['sex'].map({'M':1, 'F':0})
-risk_df['is_smoking'] = risk_df['is_smoking'].map({'YES':1, 'NO':0})
-
-education_onehot = pd.get_dummies(risk_df['education'], prefix='education')
-
-# drop the original education feature
-risk_df.drop('education', axis=1, inplace=True)
-
-# concatenate the one-hot encoded education feature with the rest of the data
-risk_df = pd.concat([risk_df, education_onehot], axis=1)
+    return stats.norm.ppf(0.75) * (series - median) / mad
 
 
-# adding new column PulsePressure
-risk_df['pulse_pressure'] = risk_df['sysBP'] - risk_df['diaBP']
+# iterate over all the columns and apply the modified z score function
+cols_to_iterate = ["totChol", "glucose", "pulse_pressure", "heartRate"]
 
-# dropping the sysBP and diaBP columns
-risk_df.drop(columns=['sysBP', 'diaBP'], inplace=True)
+for col in cols_to_iterate:
+    m_z_s = modified_z_score(df[col])
+    df = df[m_z_s.abs() <= thresh]
 
-risk_df.drop('is_smoking', axis=1, inplace=True)
-
-
-X = risk_df.drop('TenYearCHD', axis=1)
-y= risk_df['TenYearCHD']
+X = df.drop("TenYearCHD", axis=1)
+y = df["TenYearCHD"]
 
 
-# from sklearn.ensemble import ExtraTreesClassifier
-
-# model fitting
-# model = ExtraTreesClassifier()
-# model.fit(X,y)
-
-# ranking feature based on importance
-# ranked_features = pd.Series(model.feature_importances_,index=X.columns)
-# model_df = risk_df.copy()
-
-# X = model_df.drop(columns='TenYearCHD')     # independent features
-# y = model_df['TenYearCHD']                  # dependent features
+"""### Handling Data Imbalance with SMOTE"""
 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=2,stratify=y)
+from imblearn.over_sampling import SMOTE
 
-# smote = SMOTE(random_state=33)
-# X_train, y_train = smote.fit_resample(X_train, y_train)
-# print(X_train.shape)
-# print(X_test.shape) 
+smote = SMOTE(sampling_strategy="minority")
+X, y = smote.fit_resample(X, y)
 
-scaler = StandardScaler()
 
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+"""### Split the data for training and testing"""
 
-#model with highest recall score 
-# knn=KNeighborsClassifier(n_neighbors=1)
-
-#model with highest accuracy score
-knn=KNeighborsClassifier(n_neighbors=22)
-
-knn.fit(X_train,y_train)
-
-# gridSearch for finding best k value
-
-from sklearn.model_selection import GridSearchCV
-
-param_grid = {'n_neighbors': np.arange(1, 101)} 
-knn_test = KNeighborsClassifier()
-grid = GridSearchCV(knn_test, param_grid, cv=5, scoring='accuracy') 
-grid.fit(X_train, y_train)
-
-print("Best K:", grid.best_params_['n_neighbors']) 
-print("Best Score:", grid.best_score_)
+from sklearn.preprocessing import StandardScaler
 import joblib
 
-joblib.dump(knn , 'knnModel.joblib')
-joblib.dump(scaler, 'scaler.joblib')
+
+scaler = StandardScaler()
+scaler.fit(X)
+
+# save the scaler
+joblib.dump(scaler, "scaler.joblib")
+
+
+X = scaler.transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y)
+
+
+"""### Finding the best parameters for KNN."""
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
+
+
+clf = GridSearchCV(
+    KNeighborsClassifier(),
+    {
+        "n_neighbors": [*range(1, 20, 4)],
+        "weights": ["uniform", "distance"],
+        "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
+    },
+    cv=5,
+    return_train_score=False,
+)
+
+
+clf.fit(X_train, y_train)
+results = pd.DataFrame(clf.cv_results_)
+results[
+    ["param_algorithm", "param_n_neighbors", "param_weights", "mean_test_score"]
+].sort_values(by=["mean_test_score"], ascending=False)
+
+
+model = clf.best_estimator_
+
+y_preds = model.predict(X_test)
+
+joblib.dump(model, "model_KNeighborsClassifier.joblib")
