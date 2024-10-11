@@ -111,7 +111,12 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-knn=KNeighborsClassifier(n_neighbors=1)
+#model with highest recall score 
+# knn=KNeighborsClassifier(n_neighbors=1)
+
+#model with highest accuracy score
+knn=KNeighborsClassifier(n_neighbors=22)
+
 knn.fit(X_train,y_train)
 
 # gridSearch for finding best k value
@@ -120,7 +125,7 @@ from sklearn.model_selection import GridSearchCV
 
 param_grid = {'n_neighbors': np.arange(1, 101)} 
 knn_test = KNeighborsClassifier()
-grid = GridSearchCV(knn_test, param_grid, cv=5, scoring='recall') 
+grid = GridSearchCV(knn_test, param_grid, cv=5, scoring='accuracy') 
 grid.fit(X_train, y_train)
 
 print("Best K:", grid.best_params_['n_neighbors']) 
