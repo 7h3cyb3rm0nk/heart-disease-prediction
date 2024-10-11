@@ -123,20 +123,20 @@ if st.button("Predict Risk"):
     st.subheader("Prediction Result:")
     risk_probability = prediction[:, 1][0]
     
-    col1, col2 = st.columns(2)
+    # col1, col2 = st.columns(2)
     
-    with col1:
-        st.metric("Probability of 10-year CHD", f"{risk_probability:.2%}")
+    # with col1:
+    #     st.metric("Probability of 10-year CHD", f"{risk_probability:.2%}")
     
-    with col2:
-        risk_level = "High" if risk_probability > 0.2 else "Moderate" if risk_probability > 0.1 else "Low"
-        st.metric("Risk Assessment", risk_level)    
+    # with col2:
+    risk_level = "High" if risk_probability > 0.2 else "Moderate" if risk_probability > 0.1 else "Low"
+    st.metric("Risk Assessment", risk_level)    
     st.progress(risk_probability)
     
     st.subheader("Recommendations:")
-    if risk_probability > 0.2:
+    if risk_probability > 0.3:
         st.warning("Your risk is considered high. Please consult with a healthcare professional for a thorough evaluation and personalized advice.")
-    elif risk_probability > 0.1:
+    elif risk_probability > 0.2:
         st.warning("Your risk is considered moderate. Please take care of your health.")
     else:
         st.success("Your risk is considered low. Continue maintaining a healthy lifestyle with regular exercise and a balanced diet.")
