@@ -117,7 +117,7 @@ X_test = scaler.transform(X_test)
 # knn=KNeighborsClassifier(n_neighbors=3)
 
 #model with highest accuracy score
-knn=KNeighborsClassifier(n_neighbors=22)
+knn=KNeighborsClassifier(n_neighbors=1)
 
 knn.fit(X_train,y_train)
 
