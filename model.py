@@ -111,8 +111,10 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-#model with highest recall score 
+#models with highest recall score 
 # knn=KNeighborsClassifier(n_neighbors=1)
+# knn=KNeighborsClassifier(n_neighbors=2)
+# knn=KNeighborsClassifier(n_neighbors=3)
 
 #model with highest accuracy score
 knn=KNeighborsClassifier(n_neighbors=22)
@@ -123,13 +125,21 @@ knn.fit(X_train,y_train)
 
 from sklearn.model_selection import GridSearchCV
 
+# grid search for accuracy
 param_grid = {'n_neighbors': np.arange(1, 101)} 
-knn_test = KNeighborsClassifier()
-grid = GridSearchCV(knn_test, param_grid, cv=5, scoring='accuracy') 
-grid.fit(X_train, y_train)
+knn_test_accuracy = KNeighborsClassifier()
+grid_accuracy = GridSearchCV(knn_test_accuracy, param_grid, cv=5, scoring='accuracy') 
+grid_accuracy.fit(X_train, y_train)
+print("Best K for accuracy:", grid_accuracy.best_params_['n_neighbors']) 
+print("Best Score for accuracy:", grid_accuracy.best_score_)
 
-print("Best K:", grid.best_params_['n_neighbors']) 
-print("Best Score:", grid.best_score_)
+#grid search for recall score
+knn_test_recall = KNeighborsClassifier()
+grid_recall = GridSearchCV(knn_test_recall, param_grid, cv=5, scoring='recall') 
+grid_recall.fit(X_train, y_train)
+print("Best K for recall:", grid_recall.best_params_['n_neighbors']) 
+print("Best Score for recall:", grid_recall.best_score_)
+
 import joblib
 
 joblib.dump(knn , 'knnModel.joblib')
