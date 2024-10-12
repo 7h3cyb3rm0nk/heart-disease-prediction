@@ -7,7 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
-
+import warnings
+warnings.filterwarnings('ignore')
 # Importing data preprocessing libraries
 from sklearn.preprocessing import StandardScaler
 
