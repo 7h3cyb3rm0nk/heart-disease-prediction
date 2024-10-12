@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import joblib
-# from streamlit_lottie import st_lottie
+from streamlit_lottie import st_lottie
 import requests
 
 knn = joblib.load("model_KNeighborsClassifier.joblib")
@@ -84,8 +84,8 @@ with col1:
         "Enter your health information to predict your 10-year cardiovascular disease risk."
     )
 
-# with col2:
-#     st_lottie(lottie_health, height=200)
+with col2:
+    st_lottie(lottie_health, height=200)
 
 left_column, right_column = st.columns(2)
 
