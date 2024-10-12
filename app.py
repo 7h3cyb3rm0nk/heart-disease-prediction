@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import joblib
 # from streamlit_lottie import st_lottie
 import requests
@@ -130,49 +131,43 @@ education_dict = {
     "Graduate/Post Graduate": 4,
 }
 
-new_data = np.array(
-    [
-        [
-            age,
-            education_dict[education],
-            sex,
-            is_smoking,
-            cigsPerDay,
-            BPMeds,
-            prevalentStroke,
-            prevalentHyp,
-            diabetes,
-            totChol,
-            BMI,
-            heartRate,
-            glucose,
-            pulse_pressure,
-        ]
-    ],
-    # dtype=np.float16,
-)
-
+new_data = pd.DataFrame({
+    "age": [age],
+    "education": [education_dict[education]],
+    "sex": [1 if sex == "Male" else 0],
+    "is_smoking": [is_smoking],
+    "cigsPerDay": [cigsPerDay],
+    "BPMeds": [BPMeds],
+    "prevalentStroke": [prevalentStroke],
+    "prevalentHyp": [prevalentHyp],
+    "diabetes": [diabetes],
+    "totChol": [totChol],
+    "BMI": [BMI],
+    "heartRate": [heartRate],
+    "glucose": [glucose],
+    "pulse_pressure": [pulse_pressure],
+}, index=[0])
 
 if st.button("Predict Risk"):
     new_data_scaled = scaler.transform(new_data)
 
     prediction = knn.predict_proba(new_data_scaled)
 
-    st.subheader("Prediction Result:" + str(prediction.shape) + str(prediction))
+    st.subheader("Prediction Result")
     risk_probability = prediction[:, 1][0]
 
     col1, col2 = st.columns(2)
 
-    with col1:
-        st.metric("Probability of 10-year CHD", f"{risk_probability:.2%}")
+    # with col1:
+        # st.metric("Probability of 10-year CHD", f"{risk_probability:.2%}")
 
-    with col2:
-        risk_level = (
-            "High"
-            if risk_probability > 0.2
-            else "Moderate" if risk_probability > 0.1 else "Low"
-        )
-        st.metric("Risk Assessment", risk_level)
+    # with col2:
+    risk_level = (
+        "High"
+        if risk_probability > 0.2
+        else "Moderate" if risk_probability > 0.1 else "Low"
+    )
+    st.metric("Risk Assessment", risk_level)
     st.progress(risk_probability)
 
     st.subheader("Recommendations:")
