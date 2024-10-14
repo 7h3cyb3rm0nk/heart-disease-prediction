@@ -85,26 +85,10 @@ X = risk_df.drop('TenYearCHD', axis=1)
 y= risk_df['TenYearCHD']
 
 
-# from sklearn.ensemble import ExtraTreesClassifier
-
-# model fitting
-# model = ExtraTreesClassifier()
-# model.fit(X,y)
-
-# ranking feature based on importance
-# ranked_features = pd.Series(model.feature_importances_,index=X.columns)
-# model_df = risk_df.copy()
-
-# X = model_df.drop(columns='TenYearCHD')     # independent features
-# y = model_df['TenYearCHD']                  # dependent features
 
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=2,stratify=y)
 
-# smote = SMOTE(random_state=33)
-# X_train, y_train = smote.fit_resample(X_train, y_train)
-# print(X_train.shape)
-# print(X_test.shape) 
 
 scaler = StandardScaler()
 
@@ -117,7 +101,11 @@ X_test = scaler.transform(X_test)
 # knn=KNeighborsClassifier(n_neighbors=3)
 
 #model with highest accuracy score
-knn=KNeighborsClassifier(n_neighbors=1)
+
+neighbor_limit = int(input("""
+enter the value for n_neighbors:
+"""))
+knn=KNeighborsClassifier(n_neighbors=neighbor_limit)
 
 knn.fit(X_train,y_train)
 
